@@ -169,6 +169,7 @@ jobs:
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DCMAKE_OSX_ARCHITECTURES="$OSX_ARCH" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DENABLE_I18N_STRINGS=ON \
             -DLAF_BACKEND=skia \
             -DSKIA_DIR="$PWD/../skia" \
             -DSKIA_LIBRARY_DIR="$PWD/../skia/out/Release-$SKIA_ARCH"
@@ -179,6 +180,7 @@ jobs:
         run: |
           cmake -S aseprite -B aseprite/build -G Ninja `
             -DCMAKE_BUILD_TYPE="$env:BUILD_TYPE" `
+            -DENABLE_I18N_STRINGS=ON `
             -DLAF_BACKEND=skia `
             -DSKIA_DIR="$env:GITHUB_WORKSPACE/skia" `
             -DSKIA_LIBRARY_DIR="$env:GITHUB_WORKSPACE/skia/out/Release-x64"
@@ -195,6 +197,8 @@ jobs:
           set -euo pipefail
           cd aseprite/build/bin
           rm -f gen modp_b64_gen
+          # Keep the translation .ini files, drop the git history they came in.
+          rm -rf Aseprite.app/Contents/Resources/data/strings.git/.git
           ditto -c -k --sequesterRsrc --keepParent Aseprite.app \
             "$GITHUB_WORKSPACE/Aseprite-${ASEPRITE_TAG}-macOS.zip"
 
@@ -207,6 +211,8 @@ jobs:
           cd aseprite/build/bin
           Remove-Item -ErrorAction SilentlyContinue `
             gen.exe, modp_b64_gen.exe, gen.exe.manifest, modp_b64_gen.exe.manifest
+          # Keep the translation .ini files, drop the git history they came in.
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue data/strings.git/.git
           Set-Content -Path aseprite.ini -Value '# This file is here so Aseprite behaves as a portable program'
           tar -a -c -f "$env:GITHUB_WORKSPACE/Aseprite-${env:ASEPRITE_TAG}-Windows.zip" *
 
