@@ -1,5 +1,5 @@
 # What is it
-Automated workflow for GitHub Actions which builds Aseprite for Windows, Linux, macOS.</br>
+Automated workflow for GitHub Actions which builds Aseprite for macOS and Windows.</br>
 By using GitHub actions there is no need for manual compilation and it does not contain malware.</br>
 To adhere to the EULA of Aseprite, this workflow does not upload the binary in a public accessible space like artifacts.</br>
 The release can be found within the releases as a draft (only visible for repo owner).
@@ -11,19 +11,20 @@ The release can be found within the releases as a draft (only visible for repo o
 
         strategy:
             matrix:
-                os: [windows-latest, ubuntu-latest, macOS-latest]
+                os: [macos-latest, windows-latest]
 4. Save and commit.
-5. On every push to master and every day, the workflow will check for new Aseprite releases
-        
+5. Run the workflow manually (Actions → Build and deploy Aseprite → Run workflow).
+   Uncomment the `schedule`/`push` triggers if you want it to check for new Aseprite releases on its own.
+
 # Technical details
 This workflow follows the instructions as described at [Aseprite repo](https://github.com/aseprite/aseprite/blob/master/INSTALL.md)
 
-1. Every day check if there is a new Aseprite release on GitHub (by comparing against cached version)
-2. If newer version then create a draft Release where the build job can put the binaries.
-3. Start building
-4. Get Skia from cache, if not in cache then download it
-5. Use CMake and Ninja to compile
-6. Create zip of release and upload to draft Release from step 2
+1. Ask GitHub for the latest Aseprite release and download its source archive.
+2. Create a draft Release for that version (skipped if it already exists).
+3. Skip the build when every platform asset is already attached (pass `force` to rebuild anyway).
+4. Download the Skia build that the source itself asks for (`laf/misc/skia-tag.txt`).
+5. Use CMake and Ninja to compile, then package `Aseprite.app` (macOS) or a portable folder (Windows).
+6. Upload the zip to the draft Release, replacing an older asset of the same name.
 
 # Build times
 Every month you have 2000 free minutes from GitHub.</br>
