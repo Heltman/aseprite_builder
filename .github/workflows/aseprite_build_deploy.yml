@@ -189,6 +189,47 @@ jobs:
         working-directory: aseprite
         run: ninja -C build aseprite
 
+      # Info.plist asks for Aseprite.icns, Document.icns and Extension.icns, but
+      # the source tree only ships PNGs, so a from-source bundle would show the
+      # generic app icon. Build the .icns files with iconutil.
+      - name: (macOS) Add the app icons
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          icons=aseprite/data/icons
+          res=aseprite/build/bin/Aseprite.app/Contents/Resources
+          tmp=$(mktemp -d)
+
+          app=$tmp/Aseprite.iconset
+          mkdir -p "$app"
+          cp "$icons/ase16.png"    "$app/icon_16x16.png"
+          cp "$icons/ase32.png"    "$app/icon_16x16@2x.png"
+          cp "$icons/ase32.png"    "$app/icon_32x32.png"
+          cp "$icons/ase64.png"    "$app/icon_32x32@2x.png"
+          cp "$icons/ase128.png"   "$app/icon_128x128.png"
+          cp "$icons/ase256.png"   "$app/icon_128x128@2x.png"
+          cp "$icons/ase256.png"   "$app/icon_256x256.png"
+          cp "$icons/hd/asehd.png" "$app/icon_256x256@2x.png"
+          cp "$icons/hd/asehd.png" "$app/icon_512x512.png"
+          sips -z 1024 1024 "$icons/hd/asehd.png" --out "$app/icon_512x512@2x.png" >/dev/null
+          iconutil -c icns "$app" -o "$res/Aseprite.icns"
+
+          for prefix in doc ext; do
+            if [ "$prefix" = "doc" ]; then out=Document; else out=Extension; fi
+            iconset=$tmp/$out.iconset
+            mkdir -p "$iconset"
+            cp "$icons/${prefix}16.png"  "$iconset/icon_16x16.png"
+            cp "$icons/${prefix}32.png"  "$iconset/icon_16x16@2x.png"
+            cp "$icons/${prefix}32.png"  "$iconset/icon_32x32.png"
+            cp "$icons/${prefix}64.png"  "$iconset/icon_32x32@2x.png"
+            cp "$icons/${prefix}128.png" "$iconset/icon_128x128.png"
+            cp "$icons/${prefix}256.png" "$iconset/icon_128x128@2x.png"
+            cp "$icons/${prefix}256.png" "$iconset/icon_256x256.png"
+            iconutil -c icns "$iconset" -o "$res/$out.icns"
+          done
+
+          ls -lh "$res"/*.icns
+
       - name: (macOS) Zip the app bundle
         if: runner.os == 'macOS'
         env:
